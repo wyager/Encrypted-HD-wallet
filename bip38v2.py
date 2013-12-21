@@ -151,10 +151,11 @@ def make_simple_wallet(root_key, passphrase):
 	if len(root_key) != 32:
 		raise Exception("Root key must be 32 bytes")
 	prefix = 0x148217 # 32 byte 1-factor key
-	prefix += 0x00 # Add the hash function ID to the prefix
+	kdf_type = 0x00
+	prefix += kdf_type # Add the hash function ID to the prefix
 	prefix = hex(prefix)[2:].decode('hex')
 	weeks = (date.today() - date(2013, 1, 1)).days/7 - 1 # The -1 is to be safe
-	hash_function = generate_hash_function(0x00)
+	hash_function = generate_hash_function(kdf_type)
 	return encrypt_root_key(prefix, weeks, root_key, hash_function, passphrase)
 
 import os
