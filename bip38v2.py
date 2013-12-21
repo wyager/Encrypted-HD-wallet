@@ -4,7 +4,6 @@ import aes
 import hashlib
 import hmac
 import scrypt
-import base58
 from datetime import date
 
 # Encrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
@@ -158,9 +157,27 @@ def make_simple_wallet(root_key, passphrase):
 	hash_function = generate_hash_function(0x00)
 	return encrypt_root_key(prefix, weeks, root_key, hash_function, passphrase)
 
+import os
+import sys
+import base58
 if __name__ == '__main__':
-	data = make_simple_wallet("a"*32, "super secret password")
-	text = base58.b58encode_check(data)
-	print text
-	recovered_data = base58.b58decode_check(text)
-	print decrypt_root_key(recovered_data, "super secret password")
+	if '--randomkey' in sys.argv:
+		random_bytes = os.urandom(32)
+		print "Root key: " + random_bytes.encode('hex')
+	elif '--encrypt' in sys.argv:
+		root_key = raw_input("Enter the root key in hex: ").decode('hex')
+		password = raw_input("Enter the password: ")
+		data = make_simple_wallet(root_key, password)
+		text = base58.b58encode_check(data)
+		print text
+	elif '--decrypt' in sys.argv:
+		base58_data = raw_input("Enter the encrypted wallet: ")
+		recovered_data = base58.b58decode_check(base58_data)
+		password = raw_input("Enter the password: ")
+		print "Root key:" + decrypt_root_key(recovered_data, password)[3].encode('hex')
+	else:
+		print """
+		Use --randomkey to make a new root key. Not guaranteed to make a valid key.
+		Use --encrypt to encrypt the key.
+		Use --decrypt to decrypt the wallet.
+		"""
