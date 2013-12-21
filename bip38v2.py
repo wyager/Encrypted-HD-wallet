@@ -86,7 +86,7 @@ def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
 	prefix should be a 3-byte string
 	hash_function should be a function that takes a key, a salt, and a length L and outputs an L byte string.
 	passphrase should be a string
-	The returned value is a string, being `prefix + date + checksum + encrypted_key`
+	The returned value is a string, being "prefix + date + checksum + encrypted_key", in the compressed format specified in the BIP.
 	This implementation differs a bit from the current draft spec. I'm using the hash of the
 	private key instead of the hash of the master Bitcoin public address, in order to
 	prevent someone from trivially determining the master Bitcoin public address, had it ever
@@ -111,7 +111,7 @@ def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
 		whitened_root_key += chr(whitened_char)
 	encryption_key = H[-32:] # Use the last 32 bytes of H as a key
 	encrypted_root_key = aes_encrypt(whitened_root_key, encryption_key)
-	# Size:[3]      [2]    [4]        [x]
+	# Size:[3]      [2]    [4]        [16/32/64]
 	return prefix + date + checksum + encrypted_root_key
 
 def decrypt_root_key(encrypted_root_key, passphrase):
