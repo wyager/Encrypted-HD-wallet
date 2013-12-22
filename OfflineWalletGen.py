@@ -1,3 +1,5 @@
+# Will Yager's implementation of the in-development encrypted hierarchical deterministic wallet spec
+# You may need to pip install qrcode and base58.
 import qrcode
 import bip38v2
 import os
