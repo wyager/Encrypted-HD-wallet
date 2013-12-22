@@ -4,7 +4,6 @@ import aes
 import hashlib
 import hmac
 import scrypt
-from datetime import date
 
 # Encrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
 def aes_encrypt(data, key):

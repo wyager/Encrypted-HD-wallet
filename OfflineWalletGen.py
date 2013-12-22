@@ -4,6 +4,7 @@ import os
 import sys
 import getpass
 import base58
+from datetime import date
 
 # Returns 32 bytes of random data that yields a valid private key when
 # run through the BIP 0032 key -> secret algorithm.
