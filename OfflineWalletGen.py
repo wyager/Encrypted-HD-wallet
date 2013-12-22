@@ -15,6 +15,24 @@ def generate_root_key():
         return generate_root_key() # Try again.
     return random_data
 
+# A test function to generate a simple encrypted wallet
+def make_simple_wallet(root_key, passphrase, kdf_type=0):
+    """
+    make_simple_wallet(root_key, passphrase, kdf_type=0)
+    root_key is a 32 byte string (because the prefix we're using in this
+    function specifies a 32 byte string; other lengths are possible).
+    passphrase is a string
+    kdf_type is according to the spec for this BIP.
+    """
+    if len(root_key) != 32:
+        raise Exception("Root key must be 32 bytes")
+    prefix = 0x148217 # 32 byte 1-factor key
+    prefix += kdf_type # Add the hash function ID to the prefix
+    prefix = hex(prefix)[2:].decode('hex')
+    weeks = (date.today() - date(2013, 1, 1)).days/7 - 1 # The -1 is to be safe
+    hash_function = bip38v2.generate_hash_function(kdf_type)
+    return bip38v2.encrypt_root_key(prefix, weeks, root_key, hash_function, passphrase)
+
 def generate_new_wallet():
     root_key = generate_root_key()
     if "--passphrase" in sys.argv:
@@ -26,7 +44,7 @@ def generate_new_wallet():
         passphrase_confirm = getpass.getpass("Confirm:")
         if passphrase != passphrase_confirm:
             raise Exception("Password mismatch")
-    encrypted_root_key = bip38v2.make_simple_wallet(root_key, passphrase, kdf_type=0)
+    encrypted_root_key = make_simple_wallet(root_key, passphrase, kdf_type=0)
     base58_text = base58.b58encode_check(encrypted_root_key)
     print "Encrypted wallet: " + base58_text
     qr_code = qrcode.make(base58_text)

@@ -91,10 +91,10 @@ def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
     prevent someone from trivially determining the master Bitcoin public address, had it ever
     appeared in the blockchain.
     """
-    if len(prefix) != 3:
+    if len(prefix) != 3: # prefix should be a raw 3 byte string
         raise Exception("Invalid prefix length: " + str(len(prefix)))
-    if type(date) != type(1):
-        raise Exception("Date needs to be an int")
+    if type(date) != type(1) or date < 0: # date should be an int, not a string
+        raise Exception("Date needs to be a positive integer")
     if len(root_key) != 16 and len(root_key) != 32 and len(root_key) != 64:
         raise Exception("root key needs to be 16/32/64 bytes, but is " + str(len(root_key)))
     if type(root_key) != type(""):
@@ -122,10 +122,11 @@ def decrypt_root_key(encrypted_root_key, passphrase):
     prefix = encrypted_root_key[0:3]
     wallet_type = int(prefix[0:2].encode('hex'), 16)
     # This dictionary maps prefixes to (starting bottom byte values, key length, # wallet factors)
+    # See the BIP spec for a better explanation. Look at the "prefixes" section.
     prefix_values = {0x0b2d: (0x7b, 16, 1), 0x1482: (0x17, 32, 1), 0x0130: (0xb7, 64, 1), 0x14d6: (0x0d, 16, 2), 0x263a: (0xa2, 32, 2), 0x0238: (0x04, 32, 2)}
     if wallet_type not in prefix_values:
         raise Exception("Unknown prefix")
-    kdf_type = int(prefix[2].encode('hex'), 16) - prefix_values[wallet_type][0]
+    kdf_type = int(prefix[2].encode('hex'), 16) - prefix_values[wallet_type][0] # There are a number of KDF algorithms that might be in use
     date = encrypted_root_key[3:5]
     checksum = encrypted_root_key[5:9]
     encrypted_key = encrypted_root_key[9:]
@@ -135,7 +136,7 @@ def decrypt_root_key(encrypted_root_key, passphrase):
     hash_function = generate_hash_function(kdf_type)
     H = hash_function(passphrase, salt, len(encrypted_key) + 32)
     encryption_key = H[-32:] # Use the last 32 bytes of H as a key
-    decrypted_key = aes_decrypt(encrypted_key, encryption_key)
+    decrypted_key = aes_decrypt(encrypted_key, encryption_key) # The key, of length n, is still xored with the first n bits of H
     unwhitened_root_key = ''
     for i in range(len(decrypted_key)):
         unwhitened_char = ord(decrypted_key[i]) ^ ord(H[i])
@@ -146,20 +147,3 @@ def decrypt_root_key(encrypted_root_key, passphrase):
         raise Exception("Password incorrect. Checksum mismatch. Expected " + checksum.encode('hex') + " but calculated " + calculated_checksum.encode('hex'))
     return prefix, date, checksum, unwhitened_root_key
 
-# A test function to generate a simple encrypted wallet
-def make_simple_wallet(root_key, passphrase, kdf_type=0):
-    """
-    make_simple_wallet(root_key, passphrase, kdf_type=0)
-    root_key is a 32 byte string (because the prefix we're using in this
-    function specifies a 32 byte string; other lengths are possible).
-    passphrase is a string
-    kdf_type is according to the spec for this BIP.
-    """
-    if len(root_key) != 32:
-        raise Exception("Root key must be 32 bytes")
-    prefix = 0x148217 # 32 byte 1-factor key
-    prefix += kdf_type # Add the hash function ID to the prefix
-    prefix = hex(prefix)[2:].decode('hex')
-    weeks = (date.today() - date(2013, 1, 1)).days/7 - 1 # The -1 is to be safe
-    hash_function = generate_hash_function(kdf_type)
-    return encrypt_root_key(prefix, weeks, root_key, hash_function, passphrase)
