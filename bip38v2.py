@@ -206,7 +206,7 @@ def make_unencrypted_wallet(root_key, date):
     prefix = {16: 0x0B2D7B, 32: 0x148217, 64: 0x0130B7}[len(root_key)]
     checksum = secret_checksum(root_key)
 
-    byte_prefix = hex(prefix)[2:].decode('hex')
+    byte_prefix = chr((prefix >> 16) & 0xFF) + chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
     byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
 
     encrypted_key = root_key
@@ -218,8 +218,8 @@ def make_encrypted_wallet(root_key, date, passphrase, kdf_type):
     prefix = {16: 0x14D60D, 32: 0x263AA2, 64: 0x023804}[len(root_key)] + kdf_type
     checksum = secret_checksum(root_key)
 
-    byte_prefix = hex(prefix)[2:].decode('hex')
-    byte_date = ("%04x" % date).decode('hex')
+    byte_prefix = chr((prefix >> 16) & 0xFF) + chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
+    byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
 
     hash_function = kdf_functions[kdf_type]
 
