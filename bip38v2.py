@@ -207,7 +207,7 @@ def make_unencrypted_wallet(root_key, date):
     checksum = secret_checksum(root_key)
 
     byte_prefix = hex(prefix)[2:].decode('hex')
-    byte_date = ("%04x" % date).decode('hex')
+    byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
 
     encrypted_key = root_key
 

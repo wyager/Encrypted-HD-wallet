@@ -45,7 +45,7 @@ def generate_new_wallet():
         i = sys.argv.index("--weeks") + 1
         weeks = int(sys.argv[i])
     else:
-        weeks = (date.today() - date(2013, 1, 1)).days/7 - 1 # The -1 is to be safe
+        weeks = (date.today() - date(2013, 1, 1)).days/7
     ##########################
     if "--kdf" in sys.argv:
         i = sys.argv.index("--kdf") + 1
@@ -98,6 +98,9 @@ if __name__ == '__main__':
         --rootkey to specify a hex encoded root key for encryption
         --weeks to specify a date, in weeks, since 2013-01-01 to use as the creation date
         --kdf to specify the key derivation algorithm. 0 is weakest/fastest, and the default. 2 is max.
+        --test to run test vectors
         if neither passphrase nor wallet are provided in the arguments,
         the user will be prompted for their values.
         """
+
+
