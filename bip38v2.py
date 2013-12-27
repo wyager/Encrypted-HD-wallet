@@ -8,7 +8,7 @@ import os
 
 # Encrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
 def aes_encrypt(data, key):
-    if len(data) != 16 and len(data) != 32 and len(data) != 64:
+    if len(data) not in (16, 32, 64):
         raise Exception("Data is incorrect length: " + str(len(data)))
     if len(key) != 32:
         raise Exception("Key is incorrect length: " + str(len(key)))
@@ -23,7 +23,7 @@ def aes_encrypt(data, key):
 
 # Decrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
 def aes_decrypt(data, key):
-    if len(data) != 16 and len(data) != 32 and len(data) != 64:
+    if len(data) not in (16, 32, 64):
         raise Exception("Data is incorrect length: " + str(len(data)))
     if len(key) != 32:
         raise Exception("Key is incorrect length: " + str(len(key)))
