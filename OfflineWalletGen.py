@@ -88,27 +88,27 @@ test_vectors = [
     ,'creation date':"24-12-2013"
     ,'clear':"WS1A3xqGKyHq4XMvq2Qj8xBu135p7AhSVSY4fqN"
     ,'password':"Satoshi"
-    ,'kdf1':"ws19GjxzzP3vEBNp9jCcW3a7L8j3GQpdCkxBguL"
-    ,'kdf2':"ws1H7QHFD9SKtqPEYhwG4Ty1TJrmY9PpeswoDLZ"
-    ,'kdf3':"ws1Qx4bVRupdZyw9WvAfMAsiGrek42PPTJ3UeVo"
+    ,'kdf0':"ws19GjxzzP3vEBNp9jCcW3a7L8j3GQpdCkxBguL"
+    ,'kdf1':"ws1H7QHFD9SKtqPEYhwG4Ty1TJrmY9PpeswoDLZ"
+    ,'kdf2':"ws1Qx4bVRupdZyw9WvAfMAsiGrek42PPTJ3UeVo"
 },
 {
     'root key':"7f0ad7d595be13e6fe4cf1fa0fbb6ae9c26c5d9b09920709414982b6363d5844"
     ,'creation date':"24-12-2013"
     ,'clear':"WS13D1hB7v7XUYz9YH1u4UHab52MbmDUQSczJ7xavcJYkYiKvWnWa8CV87v1n"
     ,'password':"Nakamoto"
-    ,'kdf1':"ws122WLGmSa7RPS6NSxWbSCbPGRsDigg8KuVNDtwPysozeJPTTQsjc6HV5FDV"
-    ,'kdf2':"ws16JK3uHmQvTvJPxzTV7RJgXnsevMiyYUa443zi8jTpDDQAmRYRynf1V332F"
-    ,'kdf3':"ws1Aa7mXp6FjxAxWbLbkvXpzj3ogwxo2veR6qs5jiA2CPt646dbdsedR9gZ3m"
+    ,'kdf0':"ws122WLGmSa7RPS6NSxWbSCbPGRsDigg8KuVNDtwPysozeJPTTQsjc6HV5FDV"
+    ,'kdf1':"ws16JK3uHmQvTvJPxzTV7RJgXnsevMiyYUa443zi8jTpDDQAmRYRynf1V332F"
+    ,'kdf2':"ws1Aa7mXp6FjxAxWbLbkvXpzj3ogwxo2veR6qs5jiA2CPt646dbdsedR9gZ3m"
 },
 {
     'root key':"fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542"
     ,'creation date':"24-12-2013"
     ,'clear':"WS1k2JRUKEaUCkqtiVcHHx5JBRiwCxU7LazRh2hREFsFkSrMqmLbEHuGb4DZXzr8Ro4WcVaJBZHesA5PyZuMnPxW1UCc1VK4gMwVfS7x"
     ,'password':"Vires In Numeris"
-    ,'kdf1':"ws2AxUpnu8p8sboukkc1PRJrp1pYNNAnvn4A5ZbySxoJKxWy4L12vPJM8nyF2Jd3f6eanSqEij1mZyL"
-    ,'kdf2':"ws3Sa4zAotc76fFq3fKmaC8ALVDPPghYnhxiRFn8UuYHjCFND96Tp3ipW6ehA4YWQjTdiUVPpLtm62c"
-    ,'kdf3':"ws4iBf9YieQDJVMSpeNkvnhy9MsVac3obtFyBtPhiUsviFhG29S7UhCLmXo52s7rHPx3W4v9HgT9d6r"
+    ,'kdf0':"ws2AxUpnu8p8sboukkc1PRJrp1pYNNAnvn4A5ZbySxoJKxWy4L12vPJM8nyF2Jd3f6eanSqEij1mZyLhG9oW5G2DCLseRX5ucAohsz6d"
+    ,'kdf1':"ws3Sa4zAotc76fFq3fKmaC8ALVDPPghYnhxiRFn8UuYHjCFND96Tp3ipW6ehA4YWQjTdiUVPpLtm62cpUy9EdVjsjmwZGfhbebPCiQvT"
+    ,'kdf2':"ws4iBf9YieQDJVMSpeNkvnhy9MsVac3obtFyBtPhiUsviFhG29S7UhCLmXo52s7rHPx3W4v9HgT9d6rVYNGQJg1zGroHY1NnFjZ85UMH"
 },
 {
     'root key':"6ca4a27ac660c683340f59353b1375a9"
@@ -124,6 +124,7 @@ test_vectors = [
 
 
 b58 = lambda data : base58.b58encode_check(data)
+b58d = lambda data: base58.b58decode_check(data)
 def test():
     for i in range(len(test_vectors)):
         print "Testing vector %i..." % (i+1)
@@ -137,18 +138,38 @@ def test():
             print b58(bip38v2.make_wallet(root, weeks, passphrase = None))
         else:
             print "clear OK"
-        if v['kdf1'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=0)):
-            print "Error: On vector %i, the kdf1 wallet is different." % (i+1)
+        if v['kdf0'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=0)):
+            print "Error: On vector %i, the kdf0 wallet is different." % (i+1)
         else:
             print "kdf0 OK"
-        if v['kdf2'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=1)):
+        if v['kdf1'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=1)):
             print "Error: On vector %i, the kdf1 wallet is different." % (i+1)
         else:
             print "kdf1 OK"
-        if v['kdf3'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=2)):
-            print "Error: On vector %i, the kdf1 wallet is different." % (i+1)
+        if v['kdf2'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=2)):
+            print "Error: On vector %i, the kdf2 wallet is different." % (i+1)
         else:
             print "kdf2 OK"
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['clear']))[3]
+        if recovered_root == root:
+            print "Decrypted wallet OK (clear)"
+        else:
+            print "Error decrypting wallet (clear)"
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf0']), v['password'])[3]
+        if recovered_root == root:
+            print "Decrypted wallet OK (kdf0)"
+        else:
+            print "Error decrypting wallet (kdf0)"
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf1']), v['password'])[3]
+        if recovered_root == root:
+            print "Decrypted wallet OK (kdf1)"
+        else:
+            print "Error decrypting wallet (kdf1)"
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf2']), v['password'])[3]
+        if recovered_root == root:
+            print "Decrypted wallet OK (kdf2)"
+        else:
+            print "Error decrypting wallet (kdf2)"
 
 
 

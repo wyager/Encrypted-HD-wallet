@@ -104,6 +104,8 @@ def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
     checksum = secret_checksum(root_key) # Used to verify that the user entered their password correctly upon decryption
     salt = prefix + date + checksum
 
+    passphrase = passphrase.encode('utf8') #To allow for non-ascii characters
+
     preH = hmac_hash(salt, passphrase)
     strongH = hash_function(preH, preH, 64)
     postH = hmac_hash(passphrase, salt)
@@ -121,6 +123,7 @@ def decrypt_root_key(encrypted_root_key, passphrase=None):
     decrypt_root_key(encrypted_root_key, passphrase=None)
     Takes a byte string containing the encrypted root key and associated data (prefix, etc.)
     If the wallet is unencrypted, it is OK not to provide a passphrase
+    If the passphrase is non-ascii, it will be converted to utf8
     and returns a tuple of (prefix, date, checksum, root key).
     """
     prefix = encrypted_root_key[0:3]
@@ -132,18 +135,20 @@ def decrypt_root_key(encrypted_root_key, passphrase=None):
     wallet_type = int(prefix[0:2].encode('hex'), 16)
     # This dictionary maps prefixes to (starting bottom byte values, key length, encrypted)
     # See the BIP spec for a better explanation. Look at the "prefixes" section.
-    prefix_values = {0x0b2d: (0x7b, 16, False), 0x1482: (0x17, 32, False), 0x0130: (0xb7, 64, False), 0x14d6: (0x0d, 16, True), 0x263a: (0xa2, 32, True), 0x0238: (0x04, 32, True)}
+    prefix_values = {0x0b2d: (0x7b, 16, False), 0x1482: (0x17, 32, False), 0x0130: (0xb7, 64, False), 0x14d6: (0x0d, 16, True), 0x263a: (0xa2, 32, True), 0x0238: (0x04, 64, True)}
 
     if wallet_type not in prefix_values:
-        raise Exception("Unknown prefix")
+        raise Exception("Unknown prefix: " + hex(wallet_type))
     if prefix_values[wallet_type][2] == False: #Un-encrypted wallet
         return (prefix, date, checksum, encrypted_key)
     if len(encrypted_key) != prefix_values[wallet_type][1]:
-        raise Exception("Length of key does not match length specified in prefix: " + len(encrypted_key))
+        raise Exception("Length of encrypted key does not match length specified in prefix: " + str(len(encrypted_key)))
     
     kdf_type = int(prefix[2].encode('hex'), 16) - prefix_values[wallet_type][0] # There are a number of KDF algorithms that might be in use
     
     hash_function = kdf_functions[kdf_type]
+
+    passphrase = passphrase.encode('utf8') #To allow for non-ascii characters
 
     preH = hmac_hash(salt, passphrase)
     strongH = hash_function(preH, preH, 64)
