@@ -21,13 +21,13 @@ def make_simple_wallet(passphrase):
     return 
 
 def generate_new_wallet():
-      ##########################
+    ##########################
     if "--rootkey" in sys.argv:
         i = sys.argv.index("--rootkey") + 1
         root_key = sys.argv[i].decode('hex')
     else:
         root_key = bip38v2.generate_root_key()
-      ##########################
+    ##########################
     if "--unencrypted" in sys.argv:
           passphrase = None
     else:
@@ -40,7 +40,8 @@ def generate_new_wallet():
             passphrase_confirm = getpass.getpass("Confirm:")
             if passphrase != passphrase_confirm:
                 raise Exception("Password mismatch")
-      ##########################
+        passphrase = passphrase.encode('utf8')
+    ##########################
     if "--weeks" in sys.argv:
         i = sys.argv.index("--weeks") + 1
         weeks = int(sys.argv[i])
@@ -72,10 +73,10 @@ def decrypt_wallet():
         passphrase = None
     elif "--passphrase" in sys.argv:
         i = sys.argv.index("--passphrase") + 1
-        passphrase = sys.argv[i]
+        passphrase = sys.argv[i].encode('utf8')
     else:
         print "Please enter your passphrase."
-        passphrase = getpass.getpass("Passphrase:") 
+        passphrase = getpass.getpass("Passphrase:").encode('utf8')
 
     wallet_data = base58.b58decode_check(wallet)
     root_key = bip38v2.decrypt_root_key(wallet_data, passphrase)[3]
@@ -132,21 +133,22 @@ def test():
         root = v['root key'].decode('hex')
         day, month, year = tuple(map(int, v['creation date'].split('-')))
         weeks = (date(year, month, day) - date(2013, 1, 1)).days/7
+        password = v['password'].encode('utf8')
         if v['clear'] != b58(bip38v2.make_wallet(root, weeks, passphrase = None)):
             print "Error: On vector %i, the cleartext wallet is different." % (i+1)
             print v['clear']
             print b58(bip38v2.make_wallet(root, weeks, passphrase = None))
         else:
             print "clear OK"
-        if v['kdf0'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=0)):
+        if v['kdf0'] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=0)):
             print "Error: On vector %i, the kdf0 wallet is different." % (i+1)
         else:
             print "kdf0 OK"
-        if v['kdf1'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=1)):
+        if v['kdf1'] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=1)):
             print "Error: On vector %i, the kdf1 wallet is different." % (i+1)
         else:
             print "kdf1 OK"
-        if v['kdf2'] != b58(bip38v2.make_wallet(root, weeks, passphrase = v['password'], kdf_type=2)):
+        if v['kdf2'] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=2)):
             print "Error: On vector %i, the kdf2 wallet is different." % (i+1)
         else:
             print "kdf2 OK"
@@ -155,17 +157,17 @@ def test():
             print "Decrypted wallet OK (clear)"
         else:
             print "Error decrypting wallet (clear)"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf0']), v['password'])[3]
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf0']), password)[3]
         if recovered_root == root:
             print "Decrypted wallet OK (kdf0)"
         else:
             print "Error decrypting wallet (kdf0)"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf1']), v['password'])[3]
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf1']), password)[3]
         if recovered_root == root:
             print "Decrypted wallet OK (kdf1)"
         else:
             print "Error decrypting wallet (kdf1)"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf2']), v['password'])[3]
+        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf2']), password)[3]
         if recovered_root == root:
             print "Decrypted wallet OK (kdf2)"
         else:

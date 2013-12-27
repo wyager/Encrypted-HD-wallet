@@ -85,7 +85,7 @@ def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
     date can contain any date on or before the date this wallet was generated
     prefix should be a 3-byte string
     hash_function should be a function that takes a key, a salt, and a length L and outputs an L byte string.
-    passphrase should be a string
+    passphrase should be a byte string (ascii or utf-8)
     The returned value is the encrypted key as a string.
     This implementation differs a bit from the current draft spec. I'm using the hash of the
     private key instead of the hash of the master Bitcoin public address, in order to
@@ -104,8 +104,6 @@ def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
     checksum = secret_checksum(root_key) # Used to verify that the user entered their password correctly upon decryption
     salt = prefix + date + checksum
 
-    passphrase = passphrase.encode('utf8') #To allow for non-ascii characters
-
     preH = hmac_hash(salt, passphrase)
     strongH = hash_function(preH, preH, 64)
     postH = hmac_hash(passphrase, salt)
@@ -123,7 +121,7 @@ def decrypt_root_key(encrypted_root_key, passphrase=None):
     decrypt_root_key(encrypted_root_key, passphrase=None)
     Takes a byte string containing the encrypted root key and associated data (prefix, etc.)
     If the wallet is unencrypted, it is OK not to provide a passphrase
-    If the passphrase is non-ascii, it will be converted to utf8
+    Passphrase must be a byte string (ascii or utf-8 characters only)
     and returns a tuple of (prefix, date, checksum, root key).
     """
     prefix = encrypted_root_key[0:3]
@@ -147,8 +145,6 @@ def decrypt_root_key(encrypted_root_key, passphrase=None):
     kdf_type = int(prefix[2].encode('hex'), 16) - prefix_values[wallet_type][0] # There are a number of KDF algorithms that might be in use
     
     hash_function = kdf_functions[kdf_type]
-
-    passphrase = passphrase.encode('utf8') #To allow for non-ascii characters
 
     preH = hmac_hash(salt, passphrase)
     strongH = hash_function(preH, preH, 64)
