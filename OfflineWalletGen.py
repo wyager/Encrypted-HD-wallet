@@ -85,41 +85,70 @@ def decrypt_wallet():
 
 test_vectors = [
 {
-    'root key':"000102030405060708090a0b0c0d0e0f"
-    ,'creation date':"24-12-2013"
-    ,'clear':"WS1A3xqGKyHq4XMvq2Qj8xBu135p7AhSVSY4fqN"
-    ,'password':"Satoshi"
-    ,'kdf0':"ws19GjxzzP3vEBNp9jCcW3a7L8j3GQpdCkxBguL"
-    ,'kdf1':"ws1H7QHFD9SKtqPEYhwG4Ty1TJrmY9PpeswoDLZ"
-    ,'kdf2':"ws1Qx4bVRupdZyw9WvAfMAsiGrek42PPTJ3UeVo"
+'root key': '000102030405060708090a0b0c0d0e0f', 
+'creation date': '04-02-2014', 
+'clear': 'RK6nEaou4eFQC4SfrHtdh9jpnEme4K9dt2jBmG', 
+'password': 'Satoshi', 
+'privkey': 'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi', 
+'fake_password': 'Alpaca', 
+'kdf0': 'rk354bXH1JsXTwWmuvRskFWoeUX8hMjQiseNM7wj6', 
+'privkey0': 'xprv9s21ZrQH143K3TxQaa6hd8mPR9Bw2ue1H5TMjUYuUEPEDUTxK7PZ191poMob8zbU5hsckCQoBFYtQZzbgxtYz1acbLmFQtjcbWSYhQ7kSZE', 
+'kdf1': 'rk354bq4dXW8VB67XSZzQdVLFJFz64v1Dh1i12VTY', 
+'privkey1': 'xprv9s21ZrQH143K4JxBYKwi5dGE59G4vtRGLiyinEPxMdgYdPe6UqMrgJneacME8JQuoskvEzEZ1vnHwW8i1h4Mwm5wj5BUPJWf764QfkkvFAQ', 
+'kdf8': 'rk354dUN5yrKvrMQRneKJvdJFf77WDJw5ZfeeRt4H', 
+'privkey8': 'xprv9s21ZrQH143K2AaodGyHvDBQFrFcDdHVJj15zqJUkU1wuLS5kFxgE9rGBvh8rAUeenfhhwC91efxn8kHbhKGeTaQkkyGFvbKiAuLcx8t8qP', 
+'kdf9': 'rk354dedikaytYJ7D4btpcVfGuakfixf5yj2SnTcX', 
+'privkey9': 'xprv9s21ZrQH143K3Xt1wRGXFZ6D76dGLyGTWxvPv1QhkRcyPCbi6kM7WJG9dH6X9UMmzoTwoix3BsnzKf7ZkkpinPw8hyGaNLWzmcbemJVUWTj', 
 },
 {
-    'root key':"7f0ad7d595be13e6fe4cf1fa0fbb6ae9c26c5d9b09920709414982b6363d5844"
-    ,'creation date':"24-12-2013"
-    ,'clear':"WS13D1hB7v7XUYz9YH1u4UHab52MbmDUQSczJ7xavcJYkYiKvWnWa8CV87v1n"
-    ,'password':"Nakamoto"
-    ,'kdf0':"ws122WLGmSa7RPS6NSxWbSCbPGRsDigg8KuVNDtwPysozeJPTTQsjc6HV5FDV"
-    ,'kdf1':"ws16JK3uHmQvTvJPxzTV7RJgXnsevMiyYUa443zi8jTpDDQAmRYRynf1V332F"
-    ,'kdf2':"ws1Aa7mXp6FjxAxWbLbkvXpzj3ogwxo2veR6qs5jiA2CPt646dbdsedR9gZ3m"
+'root key': '7f0ad7d595be13e6fe4cf1fa0fbb6ae9c26c5d9b09920709414982b6363d5844', 
+'creation date': '04-02-2014', 
+'clear': 'RK22qqMb3CozsQfTTbSVsLEgXcjekut99SuSHn6urU4vWxjiQneHWVYabWgv', 
+'password': 'Nakamoto', 
+'privkey': 'xprv9s21ZrQH143K3f9hMVvcbY4EX4CfxsEtc6C5BMkZtgGpTGpxAscoq7SLSAcL6k5dxaZ9s4SChrtfSFoKpijuwAnhuPn76eva6W8bDr118t3', 
+'fake_password': 'hunter2', 
+'kdf0': 'rk2cMHki73WbrYgo7XK9kSr6CGBPsMjU3uZf3f3qxCv4QoGy63DkBoGJKhPdvUtp', 
+'privkey0': 'xprv9s21ZrQH143K2dojoDyxmK7SLnyqSvn56oysqu2Ctf24Rdux6JFLReRgcH5KAM1GxCTVxjpc13Mh18kSmYqUep5EkbDvQJfEEVeLZXhyuYj', 
+'kdf1': 'rk2cMJ1KizRTPbBv8zaECpcQEY66SiZcfM2yAuCpdjDbJsdgZu9xdoFDpGuTVRYe', 
+'privkey1': 'xprv9s21ZrQH143K35ajB7SFjQJAzrmGbAJyp7iBYxhB3DcY9CC8XW5GkAHXDe2HXG6hUS3iquPbGAPuZygXm43BgYamWxiDN5sFm7w12db4uvU', 
+'kdf8': 'rk2cMNSiQsAATQ19Y12nhGuL2uksZVASxNXAdjqrU3KaVcLH71No442sH1YvcwDL', 
+'privkey8': 'xprv9s21ZrQH143K3aA9djUAAX1ASAcdqtuHEXmypDNd8gNy5PH4nm7y4QrieVdw7iQgA46LCJJAxdcN4qrP87Tp8XzJQbw7aeH3LPK8G7Zj6YT', 
+'kdf9': 'rk2cMPALytexkDuxm6QREojvgzoKcgKNeURPXDTVzPdZmbfzM2R3RX75Qqu4Yk5r', 
+'privkey9': 'xprv9s21ZrQH143K4X6wJWAQbDawhqb2DaQT7mjbPhqNBHmspzrD1J5kcnb5syHr9LQggN3PtmvkjbMVs4zgTyjWmqKS4ix7J92z59cvbkF5W1s', 
 },
 {
-    'root key':"fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542"
-    ,'creation date':"24-12-2013"
-    ,'clear':"WS1k2JRUKEaUCkqtiVcHHx5JBRiwCxU7LazRh2hREFsFkSrMqmLbEHuGb4DZXzr8Ro4WcVaJBZHesA5PyZuMnPxW1UCc1VK4gMwVfS7x"
-    ,'password':"Vires In Numeris"
-    ,'kdf0':"ws2AxUpnu8p8sboukkc1PRJrp1pYNNAnvn4A5ZbySxoJKxWy4L12vPJM8nyF2Jd3f6eanSqEij1mZyLhG9oW5G2DCLseRX5ucAohsz6d"
-    ,'kdf1':"ws3Sa4zAotc76fFq3fKmaC8ALVDPPghYnhxiRFn8UuYHjCFND96Tp3ipW6ehA4YWQjTdiUVPpLtm62cpUy9EdVjsjmwZGfhbebPCiQvT"
-    ,'kdf2':"ws4iBf9YieQDJVMSpeNkvnhy9MsVac3obtFyBtPhiUsviFhG29S7UhCLmXo52s7rHPx3W4v9HgT9d6rVYNGQJg1zGroHY1NnFjZ85UMH"
+'root key': 'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542', 
+'creation date': '04-02-2014', 
+'clear': 'RK2BvY13FUD6bX25tA7XDyfAn7zbXSL8pR6TRE3EHZZ8qBm9qEyZRih8x1XhhcZwjcTfpe1Qjydn4KUdia8Wf1NshUusP1D38i88MLU9', 
+'password': 'Vires In Numeris', 
+'privkey': 'xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U', 
+'fake_password': 'Quis Custodiet Ipsos Custodes?', 
+'kdf0': 'rk5ySVmNtFzgWZFXAehk6Akvf5PanApA5Y12arynxXZF7Lhc1YqaudukJFngEBXkpc4RGqqkM3ZW4RjE7HwhWTB5Uxi7pXy7vuKouQuZZzoTP', 
+'privkey0': 'xprv9s21ZrQH143K4PUz4iSDMmUE9uovNGnZE6jZdKPDqozk8nBHBk3FRXo3tJEt4TFfo7Tkhnc9TAzUFvg7hsg7M1SddHF6nX9bBw9Tn968Aki', 
+'kdf1': 'rk5ySWZriEipJWKyL6X8Rd86cgKn9qgGC7C4QYLVCjhyuBZiKXezzf6vjyJBXtFmP1f4qzaAAP5baRhKP4yCGo6LAU9keJCvRXoU77SUNmg1o', 
+'privkey1': 'xprv9s21ZrQH143K4KmLN9WLjPsVmKgVXPUfAScqkGeifQpTeXFw2X4ijfWNMDMtu4qfbbHZ69VSLcCMiGLHSLaQQY7Rb3PzHMRLLqVN6mjrGHP', 
+'kdf8': 'rk5ySbwggFoh8MZ1CnxqSeKwzag9ifrECtToowiRYKRgcueyMGX39yBGwxbY7ExKeTSmCRHokToThN8pxYWA9WQKrouVuatCMjcvX8PZ16tPf', 
+'privkey8': 'xprv9s21ZrQH143K3CHptaD7aNZBUAYhjmCe5ceDLttwqKoQ3F73DRHNrSAVphAX2okZDWK82Eznf4bpmv9qjHZ7nzQjv2qNqXV8YwCWQEw2jiA', 
+'kdf9': 'rk5ySd2iHrVJ1CZ86Pyt6zerNzzBHfZo2rcBAX4MKNzX7doCZnNpBMc3pPf6igTCnk796isqtaEdcfagrN8Pced9VAtENVBtpugBLnjiGd28h', 
+'privkey9': 'xprv9s21ZrQH143K3YMD7T6LoFVGttrMKj9jxGAxfCv3pv6ZQfWcuBV5pqdcjyooGrqa8NeraYUuiTWJSWuz4fVMiCuEK8tWggZ6yMZZK7xLBkx', 
 },
 {
-    'root key':"6ca4a27ac660c683340f59353b1375a9"
-    ,'creation date':"24-12-2013"
-    ,'clear':"WS1A3y1yzdgNW2BgegrtNNV57EsaMdEvYqdyWFs"
-    ,'password': u'\u8061\u4e2d\u672c'
-    ,'kdf0':"ws19Gk9if3SS37cqedG3dTSNgRPRSH9cf6qxarB"
-    ,'kdf1':"ws1H7QTxsopohhHTPE3RXAhWpFUWW9kEKvrhUq3"
-    ,'kdf2':"ws1Qx4nD6aDA4E29tMF6o8AsZgqmPpSyxskQMFn"
+'root key': '6ca4a27ac660c683340f59353b1375a9', 
+'creation date': '04-02-2014', 
+'clear': 'RK6nEmXZj2nqgtCVWk3s7Suvz2XtWrdhDPpJqS', 
+'password': '聡中本', 
+'privkey': 'xprv9s21ZrQH143K3mJ4upPSDfXdA34yNjem6PSsXT63vm8dq8ikUJv4iiTD3PrSKtdGZXFVD689z5T7knXo55BjcHS2WL3Syp2DbGgnbgxw2QA', 
+'fake_password': 'Bitcoin', 
+'kdf0': 'rk354bYQBax15mmBSLTpaVuLRb9nDuaVbEseqBWpG', 
+'privkey0': 'xprv9s21ZrQH143K3BMoPfivq74do9mxCnKRTZHWScTvVyrxGtCNvGd8bCZJk1Npwnds3ghiy4TTwmwtbSkpzTFcqLup57AWqm3NvRr6sNs7ZVt', 
+'kdf1': 'rk354bi6JiGeb5suvydsNtTosocEbpWcjoK7VL9Xv', 
+'privkey1': 'xprv9s21ZrQH143K2Su2mQR7u6pweA8kwv4y3bKkvUeJUanC4eT7VVp64VxNH5uzwY12wE315rZMMf5XJQLcNLPBF7zcgoFv29UM3R9ctDqdshr', 
+'kdf8': 'rk354dLtDHN3mPNSFABTNrhKmweKPZ55LJ31EM3k6', 
+'privkey8': 'xprv9s21ZrQH143K43FPi9awkCScXaAY4mEJje4PhS5uk2R67QU6p7bHXbvwgRdcwU9xZozYZ9hqfjm6ccAbGgU5eN4fp7uMY59MGq8swJVQPKW', 
+'kdf9': 'rk354diEYQb4EdNjyosAZGNAB8L1spefWdz7RmZfX', 
+'privkey9': 'xprv9s21ZrQH143K2stwSFWe4rPabNH1k1EVwQKwr7poayVZNPJup716aWVjDBVRVRh8gSgZhTP4uiaNuCkFbXXJCbDSnmvwNbnCuvQqHDDj7Ew', 
 }
+
 ]
 
 

@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import scrypt
 import os
+import pbkdf2
 
 # Encrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
 def aes_encrypt(data, key):
@@ -51,6 +52,8 @@ kdf_functions = {
     0: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2,14), 8, 8, output_len),
     1: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2,16), 16, 16, output_len),
     2: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2, 18), 16, 16, output_len),
+    8: lambda data, salt, output_len : pbkdf2.pbkdf2(data, salt, pow(2,16), output_len),
+    9: lambda data, salt, output_len : pbkdf2.pbkdf2(data, salt, pow(2,21), output_len)
 }
 
 # This checksum is used to verify that the user entered their password correctly
