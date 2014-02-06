@@ -1,168 +1,100 @@
 # Will Yager's implementation of the in-development encrypted hierarchical deterministic wallet spec
 # You may need to install slowaes and scrypt. All are available through `pip install [whatever]`
-import aes 
-import hashlib
-import hmac
-import scrypt
 import os
-import pbkdf2
-
-# Encrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
-def aes_encrypt(data, key):
-    if len(data) not in (16, 32, 64):
-        raise Exception("Data is incorrect length: " + str(len(data)))
-    if len(key) != 32:
-        raise Exception("Key is incorrect length: " + str(len(key)))
-    key = map(ord, key) # Convert key and data to a list of ints
-    data = map(ord, data)
-    e = aes.AES()
-    result = ''
-    for i in range(len(data)/16):
-        block = e.encrypt(data[16*i : 16*i + 16], key, 32)
-        result = result + ''.join(map(chr, block))
-    return result
-
-# Decrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
-def aes_decrypt(data, key):
-    if len(data) not in (16, 32, 64):
-        raise Exception("Data is incorrect length: " + str(len(data)))
-    if len(key) != 32:
-        raise Exception("Key is incorrect length: " + str(len(key)))
-    key = map(ord, key) # Convert key and data to a list of ints
-    data = map(ord, data)
-    e = aes.AES()
-    result = ''
-    for i in range(len(data)/16):
-        block = e.decrypt(data[16*i : 16*i + 16], key, 32)
-        result = result + ''.join(map(chr, block))
-    return result
+import crypto
 
 
-# Hash with SHA 256
-sha_hash = lambda data : hashlib.sha256(data).digest()
 
-# Hash with RIPEMD-160
-ripe_hash = lambda data : hashlib.new('ripemd160', data).digest()
 
-# Hash with HMAC-SHA512
-hmac_hash = lambda key, data : hmac.new(key, data, hashlib.sha512).digest()
 
-# The various key derivation functions defined in the spec
-kdf_functions = {
-    0: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2,14), 8, 8, output_len),
-    1: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2,16), 16, 16, output_len),
-    2: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2, 18), 16, 16, output_len),
-    8: lambda data, salt, output_len : pbkdf2.pbkdf2(data, salt, pow(2,16), output_len),
-    9: lambda data, salt, output_len : pbkdf2.pbkdf2(data, salt, pow(2,21), output_len)
-}
-
-# This checksum is used to verify that the user entered their password correctly
-secret_checksum = lambda root_key : sha_hash(sha_hash(generate_master_secret(root_key)))[0:4]
-
-def string_xor(a, b):
-    result = ''
-    for i in range(len(a)):
-        result += chr(ord(a[i]) ^ ord(b[i]))
-    return result
-
-def generate_master_secret(root_key):
+def encrypt_root_key(root_key, salt, passphrase, hash_function):
     """
-    Compute generate_master_secret(root_key).
-    root_key is a BIP 0032 root key. It should be a string.
-    The returned value is a valid Bitcoin private key, in byte string format.
-    """
-    I = hmac_hash("Bitcoin seed", root_key) # See BIP 0032. This is used to generate the master secret and master chain.
-    master_secret_string = I[0:32] # The value of the master secret, as a string
-    master_secret = int(master_secret_string.encode('hex'), 16) # The integer value of the master secret
-    curve_order = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-    if master_secret == 0 or master_secret >= curve_order:
-        raise Exception("Specified root key generates invalid secret")
-    return master_secret_string
-
-
-def encrypt_root_key(prefix, date, root_key, hash_function, passphrase):
-    """
-    Compute encrypt_root_key(prefix, date, root_key, hash_function, passphrase).
+    Compute encrypt_root_key(root_key, salt, passphrase, fake_passphrase, hash_function).
     root_key is a BIP 0032 root key. It should be a 16/32/64-byte string.
-    date should be a 2-byte string (containing an unsigned integer)
-    date can contain any date on or before the date this wallet was generated
-    prefix should be a 3-byte string
+    salt is prefix+date+entropy
+    passphrase should be a byte string (utf-8)
     hash_function should be a function that takes a key, a salt, and a length L and outputs an L byte string.
-    passphrase should be a byte string (ascii or utf-8)
     The returned value is the encrypted key as a string.
-    This implementation differs a bit from the current draft spec. I'm using the hash of the
-    private key instead of the hash of the master Bitcoin public address, in order to
-    prevent someone from trivially determining the master Bitcoin public address, had it ever
-    appeared in the blockchain.
     """
-    if len(prefix) != 3: # prefix should be a raw 3 byte string
-        raise Exception("Invalid prefix length: " + str(len(prefix)))
-    if len(date) != 2: # Date should be a packed 2 byte integer
-        raise Exception("Invalid date length: " + str(len(date)))
+
     if len(root_key) not in (16,32,64):
         raise Exception("root key needs to be 16/32/64 bytes, but is " + str(len(root_key)))
     if type(root_key) != type(""):
         raise Exception("root key needs to be a string")
 
-    checksum = secret_checksum(root_key) # Used to verify that the user entered their password correctly upon decryption
-    salt = prefix + date + checksum
-
-    preH = hmac_hash(salt, passphrase)
+    preH = crypto.hmac_hash(salt, passphrase)
     strongH = hash_function(preH, preH, 64)
-    postH = hmac_hash(passphrase, salt)
-    H = scrypt.hash(postH, strongH, pow(2,10), 1, 1, len(root_key) + 32)
+    postH = crypto.hmac_hash(passphrase, salt)
+    H = crypto.pbkdf2(postH, strongH, pow(2,10), len(root_key) + 32)
 
-    whitened_root_key = string_xor(root_key, H)
+    whitened_root_key = crypto.string_xor(root_key, H[0:-32])
 
     encryption_key = H[-32:] # Use the last 32 bytes of H as a key
-    encrypted_root_key = aes_encrypt(whitened_root_key, encryption_key)
-    # Size:[3]      [2]    [4]        [16/32/64]
+    encrypted_root_key = crypto.aes_encrypt(whitened_root_key, encryption_key)
+
     return encrypted_root_key
 
-def decrypt_root_key(encrypted_root_key, passphrase=None):
+
+def decrypt_root_key(encrypted_key, salt, passphrase, hash_function):
+    preH = crypto.hmac_hash(salt, passphrase)
+    strongH = hash_function(preH, preH, 64)
+    postH = crypto.hmac_hash(passphrase, salt)
+    H = crypto.pbkdf2(postH, strongH, pow(2,10), len(encrypted_key) + 32)
+
+    encryption_key = H[-32:] # Use the last 32 bytes of H as a key
+    decrypted_key = crypto.aes_decrypt(encrypted_key, encryption_key) # The key, of length n, is still xored with the first n bits of H
+
+    unwhitened_root_key = string_xor(decrypted_key, H[0:-32])
+
+    return unwhitened_root_key
+
+
+def decrypt_wallet(encrypted_wallet, passphrase=None):
     """
-    decrypt_root_key(encrypted_root_key, passphrase=None)
+    decrypt_root_key(encrypted_wallet, passphrase=None)
     Takes a byte string containing the encrypted root key and associated data (prefix, etc.)
     If the wallet is unencrypted, it is OK not to provide a passphrase
     Passphrase must be a byte string (ascii or utf-8 characters only)
     and returns a tuple of (prefix, date, checksum, root key).
     """
-    prefix = encrypted_root_key[0:3]
-    date = encrypted_root_key[3:5]
-    checksum = encrypted_root_key[5:9]
-    salt = encrypted_root_key[0:9]
-    encrypted_key = encrypted_root_key[9:]
+    prefix = encrypted_wallet[0:2]
     
     wallet_type = int(prefix[0:2].encode('hex'), 16)
-    # This dictionary maps prefixes to (starting bottom byte values, key length, encrypted)
+    # This dictionary maps prefixes to (wallet length, entropy length, is encrypted)
     # See the BIP spec for a better explanation. Look at the "prefixes" section.
-    prefix_values = {0x0b2d: (0x7b, 16, False), 0x1482: (0x17, 32, False), 0x0130: (0xb7, 64, False), 0x14d6: (0x0d, 16, True), 0x263a: (0xa2, 32, True), 0x0238: (0x04, 64, True)}
+    prefix_values = {0x28C1: (24, 0, False), 0x4AC5: (40, 0, False), 0xFBB3: (72, 0, False), 0xF83F: (26, 2, True), 0x6731: (43, 3, True), 0x4EB4: (76, 4, True)}
 
     if wallet_type not in prefix_values:
         raise Exception("Unknown prefix: " + hex(wallet_type))
-    if prefix_values[wallet_type][2] == False: #Un-encrypted wallet
-        return (prefix, date, checksum, encrypted_key)
-    if len(encrypted_key) != prefix_values[wallet_type][1]:
-        raise Exception("Length of encrypted key does not match length specified in prefix: " + str(len(encrypted_key)))
-    
-    kdf_type = int(prefix[2].encode('hex'), 16) - prefix_values[wallet_type][0] # There are a number of KDF algorithms that might be in use
-    
-    hash_function = kdf_functions[kdf_type]
 
-    preH = hmac_hash(salt, passphrase)
-    strongH = hash_function(preH, preH, 64)
-    postH = hmac_hash(passphrase, salt)
-    H = scrypt.hash(postH, strongH, pow(2,10), 1, 1, len(encrypted_key) + 32)
+    wallet_len, entropy_len, is_encrypted = prefix_values[wallet_type]
 
-    encryption_key = H[-32:] # Use the last 32 bytes of H as a key
-    decrypted_key = aes_decrypt(encrypted_key, encryption_key) # The key, of length n, is still xored with the first n bits of H
+    if len(encrypted_wallet) != wallet_len:
+        raise Exception("Length of encrypted wallet does not match length specified in prefix: " + str(len(encrypted_wallet)))
 
-    unwhitened_root_key = string_xor(decrypted_key, H)
+    if not is_encrypted:
+        date = encrypted_wallet[2:4]
+        checksum = encrypted_wallet[4:8]
+        root_key = encrypted_wallet[8:]
+        if checksum != crypto.secret_checksum(root_key):
+            raise Exception("Checksum mismatch. Ensure the wallet was entered correctly")
+        return (prefix, date, checksum, root_key)
 
-    calculated_checksum = secret_checksum(unwhitened_root_key) # Used to verify that the user entered their password correctly upon decryption
-    if checksum != calculated_checksum:
-        raise Exception("Password incorrect. Checksum mismatch. Expected " + checksum.encode('hex') + " but calculated " + calculated_checksum.encode('hex'))
-    return prefix, date, checksum, unwhitened_root_key
+    elif is_encrypted:
+        date = encrypted_wallet[2:4]
+        entropy = encrypted_wallet[4:4+entropy_len]
+        bloom_filter = encrypted_wallet[4+entropy_len:8+entropy_len]
+        encrypted_key = encrypted_wallet[8+entropy_len:]
+        
+        kdf_type = ord(entropy[0])>>3 # The chosen KDF number goes in the top 5 bits of entropy
+        hash_function = kdf_functions[kdf_type]
+
+        decrypted_root_key = decrypted_root_key(encrypted_key, salt, passphrase, hash_function)
+
+        if not crypto.bloom_filter_contains(bloom_filter, decrypted_root_key):
+            raise Exception("Password incorrect.")
+
+        return (prefix, date, bloom_filter, decrypted_root_key)
 
 
 
@@ -177,7 +109,7 @@ def generate_root_key(length=32):
     """
     random_data = os.urandom(length)
     try:
-        generate_master_secret(random_data) # Will throw an exception if this root key generates an invalid result. Happens very rarely, but can still happen.
+        crypto.generate_master_secret(random_data) # Will throw an exception if this root key generates an invalid result. Happens very rarely, but can still happen.
     except Exception as e:
         return generate_root_key(length) # Try again.
     return random_data
@@ -194,7 +126,7 @@ def make_wallet(root_key, date, passphrase=None, kdf_type=0):
     """
     if len(root_key) not in (16,32,64):
         raise Exception("root_key must be 16/32/64 bytes long.")
-    generate_master_secret(root_key) # Will raise an exception if the root key is invalid
+    crypto.generate_master_secret(root_key) # Will raise an exception if the root key is invalid
     if date < 0:
         raise Exception("Date must be positive integer")
     if kdf_type not in kdf_functions:
@@ -210,26 +142,33 @@ def make_unencrypted_wallet(root_key, date):
     prefix = {16: 0x28C1, 32: 0x4AC5, 64: 0xFBB3}[len(root_key)]
     checksum = secret_checksum(root_key)
 
-    byte_prefix = chr((prefix >> 16) & 0xFF) + chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
+    byte_prefix = chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
     byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
 
-    encrypted_key = root_key
+    return byte_prefix+byte_date+checksum+root_key
 
-    return byte_prefix+byte_date+checksum+encrypted_key
+def make_wallet_entropy(entropy_length, kdf_type, entropy = None):
+    entropy = entropy or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
+    entropy[0] = chr((ord(entropy[0]) & 0x7) | (kdf_type << 3)) # Insert the KDF type in the top 5 bits of "entropy"
+    return ''.join(entropy)
 
-
-def make_encrypted_wallet(root_key, date, passphrase, kdf_type):
-    prefix = {16: 0xF83F, 32: 0x6731, 64: 0x4EB4}[len(root_key)] + kdf_type
-    checksum = secret_checksum(root_key)
-
-    byte_prefix = chr((prefix >> 16) & 0xFF) + chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
+def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None):
+    prefix, entropy_len = {16: (0xF83F,2), 32: (0x6731,3), 64: (0x4EB4,4)}[len(root_key)]
+    byte_prefix = chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
     byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
+    byte_entropy = make_wallet_entropy(entropy_len, kdf_type)
 
+    salt = byte_prefix + byte_date + byte_entropy
     hash_function = kdf_functions[kdf_type]
 
-    encrypted_key = encrypt_root_key(byte_prefix, byte_date, root_key, hash_function, passphrase)
+    encrypted_root_key = encrypt_root_key(root_key, salt, passphrase, hash_function)
+    
+    fake_passphrase = fake_passphrase or os.urandom(16) # If the user hasn't specified a fake passphrase, make one
+    fake_root_key = decrypt_root_key(encrypted_root_key, salt, fake_passphrase, hash_function)
+    
+    bloom_filter = crypto.bloom_filter([root_key, fake_root_key])
 
-    return byte_prefix+byte_date+checksum+encrypted_key
+    return byte_prefix+byte_date+byte_entropy+bloom_filter+encrypted_key
 
 
 
