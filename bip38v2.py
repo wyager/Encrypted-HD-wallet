@@ -168,7 +168,7 @@ def make_wallet_entropy(entropy_length, kdf_type, entropy = None):
     entropy is an optional field. If it is left as None, random entropy will be generated.
     Returns entropy_length bytes of entropy, with the KDF encoded in.
     """
-    entropy = entropy[:entropy_length] or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
+    entropy = entropy or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
     entropy[0] = chr((ord(entropy[0]) & 0x7) | (kdf_type << 3)) # Insert the KDF type in the top 5 bits of "entropy"
     return ''.join(entropy)
 
