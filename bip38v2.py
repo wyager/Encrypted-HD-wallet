@@ -196,7 +196,7 @@ def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase 
     fake_passphrase = fake_passphrase or os.urandom(16) # If the user hasn't specified a fake passphrase, make one
     fake_root_key = decrypt_root_key(encrypted_root_key, salt, fake_passphrase, hash_function)
     
-    bloom_filter = crypto.bloom_filter([root_key, fake_root_key])
+    bloom_filter = crypto.bloom_filter([root_key, fake_root_key]) # Insert both the real and fake keys into the bloom filter
 
     return byte_prefix+byte_date+byte_entropy+bloom_filter+encrypted_root_key
 
