@@ -75,7 +75,7 @@ def decrypt_wallet():
         print "Please enter your encrypted wallet."
         wallet = raw_input("Wallet:")
 
-    if wallet[0:2] == "WS": #Wallet is unencrypted
+    if wallet[0:2] == "RK": #Wallet is unencrypted
         passphrase = None
     elif "--passphrase" in sys.argv:
         i = sys.argv.index("--passphrase") + 1
