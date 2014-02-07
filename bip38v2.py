@@ -128,7 +128,7 @@ def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_typ
     Date should be an integer >= 0.
     passphrase (optional) should be a string. Providing a passphrase will enable encryption.
     kdf_type (optional) should be one of the values specified in the spec (0,1,2, 8, or 9).
-    0,1,2 are scrypt, with 0 weakest and 1 strongest. 8,9 are PBKDF2-HMAC-SHA512, with 9 strongest.
+    0,1,2 are scrypt, with 0 weakest and 2 strongest. 8,9 are PBKDF2-HMAC-SHA512, with 9 strongest.
     """
     if len(root_key) not in (16,32,64):
         raise Exception("root_key must be 16/32/64 bytes long.")
