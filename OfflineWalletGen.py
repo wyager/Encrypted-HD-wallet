@@ -31,7 +31,6 @@ def generate_new_wallet():
             passphrase_confirm = getpass.getpass("Confirm:")
             if passphrase != passphrase_confirm:
                 raise Exception("Password mismatch")
-        passphrase = passphrase.encode('utf8')
         if "--no-fake-passphrase" in sys.argv:
             fake_passphrase = None
         elif "--fake-passphrase" in sys.argv:
@@ -80,10 +79,10 @@ def decrypt_wallet():
         passphrase = None
     elif "--passphrase" in sys.argv:
         i = sys.argv.index("--passphrase") + 1
-        passphrase = sys.argv[i].encode('utf8')
+        passphrase = sys.argv[i]
     else:
         print "Please enter your passphrase."
-        passphrase = getpass.getpass("Passphrase:").encode('utf8')
+        passphrase = getpass.getpass("Passphrase:")
 
     wallet_data = base58.b58decode_check(wallet)
     root_key = bip38v2.decrypt_wallet(wallet_data, passphrase)[3]
