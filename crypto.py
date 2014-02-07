@@ -130,7 +130,7 @@ def bloom_filter(items):
     bloom_filter(items)
     Constructs a 32-bit bloom filter
     inserts all elements of items
-    eturns the 32-bit filter as a 4-byte string.
+    returns the 32-bit filter as a 4-byte string.
     """
     result = 0
     for item in items:
