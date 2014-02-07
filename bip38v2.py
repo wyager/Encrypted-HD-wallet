@@ -44,7 +44,7 @@ def decrypt_root_key(encrypted_key, salt, passphrase, hash_function):
     encryption_key = H[-32:] # Use the last 32 bytes of H as a key
     decrypted_key = crypto.aes_decrypt(encrypted_key, encryption_key) # The key, of length n, is still xored with the first n bits of H
 
-    unwhitened_root_key = string_xor(decrypted_key, H[0:-32])
+    unwhitened_root_key = crypto.string_xor(decrypted_key, H[0:-32])
 
     return unwhitened_root_key
 
@@ -76,7 +76,7 @@ def decrypt_wallet(encrypted_wallet, passphrase=None):
         date = encrypted_wallet[2:4]
         checksum = encrypted_wallet[4:8]
         root_key = encrypted_wallet[8:]
-        if checksum != crypto.secret_checksum(root_key):
+        if checksum != crypto.secret_checksum(root_key)[0:4]:
             raise Exception("Checksum mismatch. Ensure the wallet was entered correctly")
         return (prefix, date, checksum, root_key)
 
@@ -85,12 +85,12 @@ def decrypt_wallet(encrypted_wallet, passphrase=None):
         entropy = encrypted_wallet[4:4+entropy_len]
         bloom_filter = encrypted_wallet[4+entropy_len:8+entropy_len]
         encrypted_key = encrypted_wallet[8+entropy_len:]
+        salt = prefix+date+entropy
         
         kdf_type = ord(entropy[0])>>3 # The chosen KDF number goes in the top 5 bits of entropy
-        hash_function = kdf_functions[kdf_type]
+        hash_function = crypto.kdf_functions[kdf_type]
 
-        decrypted_root_key = decrypted_root_key(encrypted_key, salt, passphrase, hash_function)
-
+        decrypted_root_key = decrypt_root_key(encrypted_key, salt, passphrase, hash_function)
         if not crypto.bloom_filter_contains(bloom_filter, decrypted_root_key):
             raise Exception("Password incorrect.")
 
@@ -115,7 +115,7 @@ def generate_root_key(length=32):
     return random_data
 
 
-def make_wallet(root_key, date, passphrase=None, kdf_type=0):
+def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0):
     """
     make_wallet(root_key, date, passphrase=None, kdf_type=0)
     root_key should be a 16, 32, or 64 byte string.
@@ -129,24 +129,25 @@ def make_wallet(root_key, date, passphrase=None, kdf_type=0):
     crypto.generate_master_secret(root_key) # Will raise an exception if the root key is invalid
     if date < 0:
         raise Exception("Date must be positive integer")
-    if kdf_type not in kdf_functions:
+    if kdf_type not in crypto.kdf_functions:
         raise Exception("Unknown KDF type")
 
 
     if passphrase is None: # Unencrypted wallet
         return make_unencrypted_wallet(root_key, date)
     else: # Encrypted wallet
-        return make_encrypted_wallet(root_key, date, passphrase, kdf_type)
+        return make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = fake_passphrase)
 
 def make_unencrypted_wallet(root_key, date):
     prefix = {16: 0x28C1, 32: 0x4AC5, 64: 0xFBB3}[len(root_key)]
-    checksum = secret_checksum(root_key)
+    checksum = crypto.secret_checksum(root_key)[0:4]
 
     byte_prefix = chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
     byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
 
     return byte_prefix+byte_date+checksum+root_key
 
+# Each encrypted wallet has a 2/3/4 byte "entropy" field that holds a salt and the KDF type
 def make_wallet_entropy(entropy_length, kdf_type, entropy = None):
     entropy = entropy or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
     entropy[0] = chr((ord(entropy[0]) & 0x7) | (kdf_type << 3)) # Insert the KDF type in the top 5 bits of "entropy"
@@ -159,7 +160,7 @@ def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase 
     byte_entropy = make_wallet_entropy(entropy_len, kdf_type)
 
     salt = byte_prefix + byte_date + byte_entropy
-    hash_function = kdf_functions[kdf_type]
+    hash_function = crypto.kdf_functions[kdf_type]
 
     encrypted_root_key = encrypt_root_key(root_key, salt, passphrase, hash_function)
     
@@ -168,7 +169,7 @@ def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase 
     
     bloom_filter = crypto.bloom_filter([root_key, fake_root_key])
 
-    return byte_prefix+byte_date+byte_entropy+bloom_filter+encrypted_key
+    return byte_prefix+byte_date+byte_entropy+bloom_filter+encrypted_root_key
 
 
 

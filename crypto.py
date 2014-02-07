@@ -97,22 +97,22 @@ kdf_functions = {
     0: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2,14), 8, 8, output_len),
     1: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2,16), 16, 16, output_len),
     2: lambda data, salt, output_len : scrypt.hash(data, salt, pow(2, 18), 16, 16, output_len),
-    8: lambda data, salt, output_len : pbkdf2.pbkdf2(data, salt, pow(2,16), output_len),
-    9: lambda data, salt, output_len : pbkdf2.pbkdf2(data, salt, pow(2,21), output_len)
+    8: lambda data, salt, output_len : pbkdf2(data, salt, pow(2,16), output_len),
+    9: lambda data, salt, output_len : pbkdf2(data, salt, pow(2,21), output_len)
 }
 
 
 ################ Verification ################
 
 # This checksum is used to verify that the user entered their unencrypted waller correctly
-secret_checksum = lambda root_key : sha_hash(sha_hash(generate_master_secret(root_key)))[0:4]
+secret_checksum = lambda root_key : sha_hash(sha_hash(generate_master_secret(root_key)))
 
 
 # Used to verify the user entered their password correctly for an encrypted wallet
 def bloom_filter(items):
     result = 0
     for item in items:
-        for value in sha_hash(sha_hash(item))[0:11]:
+        for value in secret_checksum(item)[0:11]:
             element = ord(value) & 0x1F
             result |= 1 << element
     return chr(result & 0xFF) + chr((result >> 8) & 0xFF) + chr((result >> 16) & 0xFF) + chr((result >> 24) & 0xFF)

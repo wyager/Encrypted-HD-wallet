@@ -6,19 +6,9 @@ import os
 import sys
 import getpass
 import base58
+import crypto
 from datetime import date
 
-
-# A test function to generate a simple encrypted wallet
-def make_simple_wallet(passphrase):
-    """
-    make_simple_wallet(root_key, passphrase, kdf_type=0)
-    passphrase is a string
-    kdf_type is according to the spec for this BIP.
-    """
-    root_key = bip38v2.generate_root_key()
-    
-    return 
 
 def generate_new_wallet():
     ##########################
@@ -30,6 +20,7 @@ def generate_new_wallet():
     ##########################
     if "--unencrypted" in sys.argv:
           passphrase = None
+          fake_passphrase = None
     else:
         if "--passphrase" in sys.argv:
             i = sys.argv.index("--passphrase") + 1
@@ -41,6 +32,22 @@ def generate_new_wallet():
             if passphrase != passphrase_confirm:
                 raise Exception("Password mismatch")
         passphrase = passphrase.encode('utf8')
+        if "--random-fake-passphrase" in sys.argv:
+            fake_passphrase = None
+        elif "--fake-passphrase" in sys.argv:
+            i = sys.argv.index("--passphrase") + 1
+            fake_passphrase = sys.argv[i]
+        else:
+            print "Please enter your second (fake) passphrase."
+            print "This can be used if you are forced to decrypt the wallet."
+            print "Leave this as empty if you don't want a fake passphrase."
+            fake_passphrase = getpass.getpass("Fake Passphrase:") 
+            if fake_passphrase is not "":
+                fake_passphrase_confirm = getpass.getpass("Confirm:")
+                if fake_passphrase != fake_passphrase_confirm:
+                    raise Exception("Password mismatch")
+            else:
+                fake_passphrase = None
     ##########################
     if "--weeks" in sys.argv:
         i = sys.argv.index("--weeks") + 1
@@ -54,7 +61,7 @@ def generate_new_wallet():
     else:
         kdf_type = 0
     ##########################
-    encrypted_wallet = bip38v2.make_wallet(root_key, weeks, passphrase=passphrase, kdf_type=kdf_type)
+    encrypted_wallet = bip38v2.make_wallet(root_key, weeks, passphrase=passphrase, fake_passphrase=fake_passphrase, kdf_type=kdf_type)
     base58_text = base58.b58encode_check(encrypted_wallet)
     print "Encrypted wallet: " + base58_text
     qr_code = qrcode.make(base58_text)
@@ -79,7 +86,7 @@ def decrypt_wallet():
         passphrase = getpass.getpass("Passphrase:").encode('utf8')
 
     wallet_data = base58.b58decode_check(wallet)
-    root_key = bip38v2.decrypt_root_key(wallet_data, passphrase)[3]
+    root_key = bip38v2.decrypt_wallet(wallet_data, passphrase)[3]
     print "Root key:"
     print root_key.encode('hex')
 
@@ -136,7 +143,7 @@ test_vectors = [
 'root key': '6ca4a27ac660c683340f59353b1375a9', 
 'creation date': '04-02-2014', 
 'clear': 'RK6nEmXZj2nqgtCVWk3s7Suvz2XtWrdhDPpJqS', 
-'password': '聡中本', 
+'password': '\xe8\x81\xa1\xe4\xb8\xad\xe6\x9c\xac',
 'privkey': 'xprv9s21ZrQH143K3mJ4upPSDfXdA34yNjem6PSsXT63vm8dq8ikUJv4iiTD3PrSKtdGZXFVD689z5T7knXo55BjcHS2WL3Syp2DbGgnbgxw2QA', 
 'fake_password': 'Bitcoin', 
 'kdf0': 'rk354bYQBax15mmBSLTpaVuLRb9nDuaVbEseqBWpG', 
@@ -162,46 +169,40 @@ def test():
         root = v['root key'].decode('hex')
         day, month, year = tuple(map(int, v['creation date'].split('-')))
         weeks = (date(year, month, day) - date(2013, 1, 1)).days/7
-        password = v['password'].encode('utf8')
+        password = v['password']
+        fake_password = v['fake_password']
+
+        ###### Clear ######
         if v['clear'] != b58(bip38v2.make_wallet(root, weeks, passphrase = None)):
             print "Error: On vector %i, the cleartext wallet is different." % (i+1)
             print v['clear']
             print b58(bip38v2.make_wallet(root, weeks, passphrase = None))
         else:
             print "clear OK"
-        if v['kdf0'] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=0)):
-            print "Error: On vector %i, the kdf0 wallet is different." % (i+1)
-        else:
-            print "kdf0 OK"
-        if v['kdf1'] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=1)):
-            print "Error: On vector %i, the kdf1 wallet is different." % (i+1)
-        else:
-            print "kdf1 OK"
-        if v['kdf2'] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=2)):
-            print "Error: On vector %i, the kdf2 wallet is different." % (i+1)
-        else:
-            print "kdf2 OK"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['clear']))[3]
+
+        recovered_root = bip38v2.decrypt_wallet(b58d(v['clear']))[3]
         if recovered_root == root:
             print "Decrypted wallet OK (clear)"
         else:
             print "Error decrypting wallet (clear)"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf0']), password)[3]
-        if recovered_root == root:
-            print "Decrypted wallet OK (kdf0)"
-        else:
-            print "Error decrypting wallet (kdf0)"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf1']), password)[3]
-        if recovered_root == root:
-            print "Decrypted wallet OK (kdf1)"
-        else:
-            print "Error decrypting wallet (kdf1)"
-        recovered_root = bip38v2.decrypt_root_key(b58d(v['kdf2']), password)[3]
-        if recovered_root == root:
-            print "Decrypted wallet OK (kdf2)"
-        else:
-            print "Error decrypting wallet (kdf2)"
 
+        ###### Encrypted ######
+        for kdf in (0,1,8):
+            # if v['kdf'+str(kdf)] != b58(bip38v2.make_wallet(root, weeks, passphrase = password, kdf_type=kdf)):
+            #     print "Error: On vector %i, the kdf0 wallet is different." % (i+1)
+            # else:
+            #     print "kdf0 OK"
+            recovered_root = bip38v2.decrypt_wallet(b58d(v['kdf'+str(kdf)]), passphrase=password)[3]
+            if recovered_root == root:
+                print "Decrypted wallet OK (kdf{})".format(kdf)
+            else:
+                print "Error decrypting wallet (kdf{})".format(kdf)
+            recovered_fake_root = bip38v2.decrypt_wallet(b58d(v['kdf'+str(kdf)]), passphrase=fake_password)[3]
+            recovered_fake_master = crypto.generate_master_secret(recovered_fake_root)
+            if recovered_fake_master == b58d(v['privkey'+str(kdf)])[-32:]:
+                print "Decrypted wallet w/fake password OK (kdf{})".format(kdf)
+            else:
+                print "Error decrypting wallet with fake password (kdf{})".format(kdf)
 
 
 if __name__ == '__main__':
@@ -218,10 +219,12 @@ if __name__ == '__main__':
         --create to generate a new encrypted wallet
         --unencrypted to make the new wallet unencrypted
         --passphrase to specify a passphrase on the command line
+        --fake-passphrase to specify a fake passphrase
+        --random-fake-passphrase to specify a random fake passphrase
         --wallet to specify a base58_check encoded encrypted wallet value
         --rootkey to specify a hex encoded root key for encryption
         --weeks to specify a date, in weeks, since 2013-01-01 to use as the creation date
-        --kdf to specify the key derivation algorithm. 0 is weakest/fastest, and the default. 2 is max.
+        --kdf to specify the key derivation algorithm. 0/1/2 are scrypt. 8/9 are PBKDF2-HMAC-SHA512
         --test to run test vectors
         if neither passphrase nor wallet are provided in the arguments,
         the user will be prompted for their values.
