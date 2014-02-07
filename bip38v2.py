@@ -3,13 +3,9 @@
 import os
 import crypto
 
-
-
-
-
 def encrypt_root_key(root_key, salt, passphrase, hash_function):
     """
-    Compute encrypt_root_key(root_key, salt, passphrase, fake_passphrase, hash_function).
+    encrypt_root_key(root_key, salt, passphrase, hash_function).
     root_key is a BIP 0032 root key. It should be a 16/32/64-byte string.
     salt is prefix+date+entropy
     passphrase should be a byte string (utf-8)
@@ -36,6 +32,14 @@ def encrypt_root_key(root_key, salt, passphrase, hash_function):
 
 
 def decrypt_root_key(encrypted_key, salt, passphrase, hash_function):
+    """
+    decrypt_root_key(encrypted_key, salt, passphrase, hash_function).
+    encrypted_key is a 16/32/64 byte string
+    salt is prefix+date+entropy
+    passphrase should be a byte string (utf-8)
+    hash_function should be a function that takes a key, a salt, and a length L and outputs an L byte string.
+    The returned value is the unencrypted key as a string.
+    """
     preH = crypto.hmac_hash(salt, passphrase)
     strongH = hash_function(preH, preH, 64)
     postH = crypto.hmac_hash(passphrase, salt)
@@ -52,10 +56,10 @@ def decrypt_root_key(encrypted_key, salt, passphrase, hash_function):
 def decrypt_wallet(encrypted_wallet, passphrase=None):
     """
     decrypt_root_key(encrypted_wallet, passphrase=None)
-    Takes a byte string containing the encrypted root key and associated data (prefix, etc.)
+    Takes a byte string (not encoded - raw bytes) containing the encrypted root key and associated data (prefix, etc.)
     If the wallet is unencrypted, it is OK not to provide a passphrase
     Passphrase must be a byte string (ascii or utf-8 characters only)
-    and returns a tuple of (prefix, date, checksum, root key).
+    and returns a tuple of (prefix, date, checksum/bloom filter, root key).
     """
     prefix = encrypted_wallet[0:2]
     
@@ -65,7 +69,7 @@ def decrypt_wallet(encrypted_wallet, passphrase=None):
     prefix_values = {0x28C1: (24, 0, False), 0x4AC5: (40, 0, False), 0xFBB3: (72, 0, False), 0xF83F: (26, 2, True), 0x6731: (43, 3, True), 0x4EB4: (76, 4, True)}
 
     if wallet_type not in prefix_values:
-        raise Exception("Unknown prefix: " + hex(wallet_type))
+        raise Exception("Unknown wallet type: " + hex(wallet_type))
 
     wallet_len, entropy_len, is_encrypted = prefix_values[wallet_type]
 
@@ -73,6 +77,7 @@ def decrypt_wallet(encrypted_wallet, passphrase=None):
         raise Exception("Length of encrypted wallet does not match length specified in prefix: " + str(len(encrypted_wallet)))
 
     if not is_encrypted:
+        # [2 byte prefix][2 byte date][4 byte checksum][16/32/64 byte key, per prefix]
         date = encrypted_wallet[2:4]
         checksum = encrypted_wallet[4:8]
         root_key = encrypted_wallet[8:]
@@ -81,6 +86,7 @@ def decrypt_wallet(encrypted_wallet, passphrase=None):
         return (prefix, date, checksum, root_key)
 
     elif is_encrypted:
+        # [2 byte prefix][2 byte date][2/3/4 byte entropy+kdf, per prefix][4 byte bloom filter][16/32/64 byte key, per prefix]
         date = encrypted_wallet[2:4]
         entropy = encrypted_wallet[4:4+entropy_len]
         bloom_filter = encrypted_wallet[4+entropy_len:8+entropy_len]
@@ -139,6 +145,11 @@ def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_typ
         return make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = fake_passphrase)
 
 def make_unencrypted_wallet(root_key, date):
+    """
+    make_unencrypted_wallet(root_key, date)
+    Create a wallet with no encryption.
+    Root key is a 16/32/64 byte BIP0032 key. Date is a 16 bit integer, per the spec.
+    """
     prefix = {16: 0x28C1, 32: 0x4AC5, 64: 0xFBB3}[len(root_key)]
     checksum = crypto.secret_checksum(root_key)[0:4]
 
@@ -149,11 +160,29 @@ def make_unencrypted_wallet(root_key, date):
 
 # Each encrypted wallet has a 2/3/4 byte "entropy" field that holds a salt and the KDF type
 def make_wallet_entropy(entropy_length, kdf_type, entropy = None):
-    entropy = entropy or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
+    """
+    make_wallet_entropy(entropy_length, kdf_type, entropy = None)
+    Used as a salt for wallet encryption, and also used to store the KDF type.
+    entropy_length is the amount of entropy to return (in bytes).
+    kdf_type is the KDF index, per the spec
+    entropy is an optional field. If it is left as None, random entropy will be generated.
+    Returns entropy_length bytes of entropy, with the KDF encoded in.
+    """
+    entropy = entropy[:entropy_length] or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
     entropy[0] = chr((ord(entropy[0]) & 0x7) | (kdf_type << 3)) # Insert the KDF type in the top 5 bits of "entropy"
     return ''.join(entropy)
 
 def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None):
+    """
+    make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None)
+    root_key is the 16/32/64 byte BIP0032 key.
+    date is the 16 bit integer date code.
+    kdf_type is the KDF index, per the spec.
+    passphrase is the "true" passphrase that the user intends to decrypt the wallet with
+    fake_passphrase is a secondary passphrase that will also successfully decrypt the wallet,
+       but will return a different key. Good for plausible deniability.
+    Returns a byte string containing the wallet.
+    """
     prefix, entropy_len = {16: (0xF83F,2), 32: (0x6731,3), 64: (0x4EB4,4)}[len(root_key)]
     byte_prefix = chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
     byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)

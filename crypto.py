@@ -32,6 +32,10 @@ def pbkdf2_F(password, salt, iterations, i):
     return result
 
 def pbkdf2(password, salt, iterations, output_len):
+    """
+    pbkdf2(password, salt, iterations, output_len)
+    Computes PBKDF2-HMAC-SHA512 with the given arguments
+    """
     output_blocks = output_len // 64
     if (output_len % 64) != 0:
         output_blocks += 1
@@ -43,8 +47,13 @@ def pbkdf2(password, salt, iterations, output_len):
 
 ################ AES ################
 
-# Encrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
 def aes_encrypt(data, key):
+    """
+    aes_encrypt(data, key)
+    Encrypt with AES ECB.
+    data can be 16/32/64 bytes.
+    key must be 32 bytes (256 bits).
+    """
     if len(data) not in (16, 32, 64):
         raise Exception("Data is incorrect length: " + str(len(data)))
     if len(key) != 32:
@@ -58,8 +67,13 @@ def aes_encrypt(data, key):
         result = result + ''.join(map(chr, block))
     return result
 
-# Decrypt with AES ECB. Key must be 32 bytes (256 bits). Data can be 16, 32, or 64 bytes.
 def aes_decrypt(data, key):
+    """
+    aes_decrypt(data, key)
+    Decrypt with AES ECB.
+    data can be 16/32/64 bytes.
+    key must be 32 bytes (256 bits).
+    """
     if len(data) not in (16, 32, 64):
         raise Exception("Data is incorrect length: " + str(len(data)))
     if len(key) != 32:
@@ -79,7 +93,7 @@ def aes_decrypt(data, key):
 
 def generate_master_secret(root_key):
     """
-    Compute generate_master_secret(root_key).
+    generate_master_secret(root_key).
     root_key is a BIP 0032 root key. It should be a string.
     The returned value is a valid Bitcoin private key, in byte string format.
     """
@@ -110,6 +124,12 @@ secret_checksum = lambda root_key : sha_hash(sha_hash(generate_master_secret(roo
 
 # Used to verify the user entered their password correctly for an encrypted wallet
 def bloom_filter(items):
+    """
+    bloom_filter(items)
+    Constructs a 32-bit bloom filter
+    inserts all elements of items
+    eturns the 32-bit filter as a 4-byte string.
+    """
     result = 0
     for item in items:
         for value in secret_checksum(item)[0:11]:
@@ -118,6 +138,11 @@ def bloom_filter(items):
     return chr(result & 0xFF) + chr((result >> 8) & 0xFF) + chr((result >> 16) & 0xFF) + chr((result >> 24) & 0xFF)
 
 def bloom_filter_contains(other_filter, item):
+    """
+    bloom_filter_contains(other_filter, item)
+    other_filter is a 4-byte string
+    returns if item might be an element of other_filter
+    """
     item_only_filter = bloom_filter([item])
     for i in range(4):
         if (ord(other_filter[i]) & ord(item_only_filter[i])) != ord(item_only_filter[i]): #Make sure that all the proper bits are set in the filter
