@@ -110,7 +110,7 @@ def generate_root_key(length=32):
     """
     generate_root_key(length=32)
     generate a valid root key.
-    len should be 16, 32, or 64.
+    length should be 16, 32, or 64.
     returns a string.
     """
     random_data = os.urandom(length)

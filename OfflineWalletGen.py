@@ -16,7 +16,7 @@ def generate_new_wallet():
         i = sys.argv.index("--rootkey") + 1
         root_key = sys.argv[i].decode('hex')
     else:
-        root_key = bip38v2.generate_root_key()
+        root_key = bip38v2.generate_root_key(length=32) # Feel free to change this to 16 or 64
     ##########################
     if "--unencrypted" in sys.argv:
           passphrase = None
@@ -32,10 +32,10 @@ def generate_new_wallet():
             if passphrase != passphrase_confirm:
                 raise Exception("Password mismatch")
         passphrase = passphrase.encode('utf8')
-        if "--random-fake-passphrase" in sys.argv:
+        if "--no-fake-passphrase" in sys.argv:
             fake_passphrase = None
         elif "--fake-passphrase" in sys.argv:
-            i = sys.argv.index("--passphrase") + 1
+            i = sys.argv.index("--fake-passphrase") + 1
             fake_passphrase = sys.argv[i]
         else:
             print "Please enter your second (fake) passphrase."
@@ -220,7 +220,7 @@ if __name__ == '__main__':
         --unencrypted to make the new wallet unencrypted
         --passphrase to specify a passphrase on the command line
         --fake-passphrase to specify a fake passphrase
-        --random-fake-passphrase to specify a random fake passphrase
+        --no-fake-passphrase if you don't want a fake passphrase
         --wallet to specify a base58_check encoded encrypted wallet value
         --rootkey to specify a hex encoded root key for encryption
         --weeks to specify a date, in weeks, since 2013-01-01 to use as the creation date
