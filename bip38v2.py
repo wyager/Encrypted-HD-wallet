@@ -121,14 +121,18 @@ def generate_root_key(length=32):
     return random_data
 
 
-def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0):
+def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0, salt_entropy = 0):
     """
-    make_wallet(root_key, date, passphrase=None, kdf_type=0)
+    make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0, salt_entropy = 0)
     root_key should be a 16, 32, or 64 byte string.
-    Date should be an integer >= 0.
+    Date should be a 16-bit integer >= 0.
     passphrase (optional) should be a string. Providing a passphrase will enable encryption.
+    fake_passphrase (optional) should be a string. If one is not provided, and encryption is enabled,
+       a random one will be generated.
     kdf_type (optional) should be one of the values specified in the spec (0,1,2, 8, or 9).
     0,1,2 are scrypt, with 0 weakest and 2 strongest. 8,9 are PBKDF2-HMAC-SHA512, with 9 strongest.
+    salt_entropy (optional) is the random "entropy" data (see spec) to be used in the wallet. Will
+       be randomly generated if this option is left off or set to None.
     """
     if len(root_key) not in (16,32,64):
         raise Exception("root_key must be 16/32/64 bytes long.")
@@ -142,7 +146,7 @@ def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_typ
     if passphrase is None: # Unencrypted wallet
         return make_unencrypted_wallet(root_key, date)
     else: # Encrypted wallet
-        return make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = fake_passphrase)
+        return make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = fake_passphrase, salt_entropy = salt_entropy)
 
 def make_unencrypted_wallet(root_key, date):
     """
@@ -168,25 +172,27 @@ def make_wallet_entropy(entropy_length, kdf_type, entropy = None):
     entropy is an optional field. If it is left as None, random entropy will be generated.
     Returns entropy_length bytes of entropy, with the KDF encoded in.
     """
-    entropy = entropy or list(os.urandom(entropy_length)) # If the user hasn't specified entropy, get some
-    entropy[0] = chr((ord(entropy[0]) & 0x7) | (kdf_type << 3)) # Insert the KDF type in the top 5 bits of "entropy"
-    return ''.join(entropy)
+    entropy = entropy or os.urandom(entropy_length) # If the user hasn't specified entropy, get some
+    entropy = chr((ord(entropy[0]) & 0x7) | (kdf_type << 3)) + entropy[1:] # Insert the KDF type in the top 5 bits of "entropy"
+    return entropy[0:entropy_length]
 
-def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None):
+def make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None, salt_entropy = None):
     """
-    make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None)
+    make_encrypted_wallet(root_key, date, kdf_type, passphrase, fake_passphrase = None, salt_entropy = None)
     root_key is the 16/32/64 byte BIP0032 key.
     date is the 16 bit integer date code.
     kdf_type is the KDF index, per the spec.
     passphrase is the "true" passphrase that the user intends to decrypt the wallet with
     fake_passphrase is a secondary passphrase that will also successfully decrypt the wallet,
        but will return a different key. Good for plausible deniability.
+    salt_entropy is the data used for the wallet's salt (called "entropy" in the spec). If
+       this argument is left off or set to None, entropy will be randomly generated.
     Returns a byte string containing the wallet.
     """
     prefix, entropy_len = {16: (0xF83F,2), 32: (0x6731,3), 64: (0x4EB4,4)}[len(root_key)]
     byte_prefix = chr((prefix >> 8) & 0xFF) + chr(prefix & 0xFF)
     byte_date = chr(date & 0xFF) + chr((date >> 8) & 0xFF)
-    byte_entropy = make_wallet_entropy(entropy_len, kdf_type)
+    byte_entropy = make_wallet_entropy(entropy_len, kdf_type, entropy = salt_entropy)
 
     salt = byte_prefix + byte_date + byte_entropy
     hash_function = crypto.kdf_functions[kdf_type]
