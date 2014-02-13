@@ -1,6 +1,5 @@
 # Will Yager's implementation of the in-development encrypted hierarchical deterministic wallet spec
 
-import qrcode
 import bip38v2
 import os
 import sys
@@ -113,9 +112,11 @@ def generate_new_wallet():
     encrypted_wallet = bip38v2.make_wallet(root_key, weeks, passphrase=passphrase, fake_passphrase=fake_passphrase, kdf_type=kdf_type)
     base58_text = base58.b58encode_check(encrypted_wallet)
     print "Encrypted wallet: " + base58_text
-    qr_code = qrcode.make(base58_text)
-    qr_code.save("wallet.png")
-    print "QR code saved to wallet.png"
+    if "--qrcode" in sys.argv:
+        import qrcode
+        qr_code = qrcode.make(base58_text)
+        qr_code.save("wallet.png")
+        print "QR code saved to wallet.png"
 
 def decrypt_wallet():
     if "--wallet" in sys.argv:
@@ -275,6 +276,7 @@ if __name__ == '__main__':
         --weeks to specify a date, in weeks, since 2013-01-01 to use as the creation date
         --kdf to specify the key derivation algorithm. 0/1/2 are scrypt. 8/9 are PBKDF2-HMAC-SHA512
         --test to run test vectors
+        --qrcode to generate a QR code
         if neither passphrase nor wallet are provided in the arguments,
         the user will be prompted for their values.
         """

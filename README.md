@@ -3,4 +3,4 @@ qrcode
 slowaes
 scrypt
 base58
-PIL
+PIL (for --qrcode option)
