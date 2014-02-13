@@ -1,5 +1,5 @@
 # Will Yager's implementation of the in-development encrypted hierarchical deterministic wallet spec
-# You may need to install slowaes and scrypt. All are available through `pip install [whatever]`
+
 import os
 import crypto
 

@@ -1,5 +1,5 @@
 # Will Yager's implementation of the in-development encrypted hierarchical deterministic wallet spec
-# You may need to pip install qrcode and base58.
+
 import qrcode
 import bip38v2
 import os
@@ -49,8 +49,8 @@ def simple_wallet():
     # These are also valid ways to make wallets:
     if False:
         wallet2 = bip38v2.make_wallet(root_key, weeks) # unencrypted
-        wallet3 = bip38v2.make_wallet(root_key, 0, passphrase = "bob") # No date, random fake password, default KDF (weak scrypt)
-        wallet4 = bip38v2.make_wallet(root_key, weeks, passphrase="hello", kdf_type=8) # Random fake password, weak PBKDF2 as KDF
+        wallet3 = bip38v2.make_wallet(root_key, 0, passphrase = "bob") # No date, random fake password, default KDF (weaker scrypt)
+        wallet4 = bip38v2.make_wallet(root_key, weeks, passphrase="hello", kdf_type=8) # Random fake password, weaker PBKDF2 as KDF
 
     # Now we'll encode the wallet in the format we're used to
     base58_wallet = base58.b58encode_check(wallet)
@@ -109,6 +109,7 @@ def generate_new_wallet():
     else:
         kdf_type = 0
     ##########################
+    print "Generating wallet. May take quite a while!"
     encrypted_wallet = bip38v2.make_wallet(root_key, weeks, passphrase=passphrase, fake_passphrase=fake_passphrase, kdf_type=kdf_type)
     base58_text = base58.b58encode_check(encrypted_wallet)
     print "Encrypted wallet: " + base58_text

@@ -1,5 +1,4 @@
 # Will Yager's implementation of PBKDF2-HMAC-SHA512, as well as some important crypto utilities
-# Note: This entire BIP can be implemented without scrypt, if you intend to put it on an embedded/mobile device
 
 import aes 
 import hashlib
