@@ -1,4 +1,5 @@
 # Will Yager's implementation of the in-development encrypted hierarchical deterministic wallet spec
+# https://github.com/wyager/Encrypted-HD-wallet
 
 import os
 import crypto

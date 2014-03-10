@@ -1,4 +1,5 @@
 # Will Yager's implementation of PBKDF2-HMAC-SHA512, as well as some important crypto utilities
+# https://github.com/wyager/Encrypted-HD-wallet
 
 import aes 
 import hashlib
