@@ -23,6 +23,18 @@ hmac_hash = lambda key, data : hmac.new(key, data, hashlib.sha512).digest()
 
 ################ PBKDF2 ################
 
+# Note: This is a fully fleshed out implementation to 
+# minimize the number of external dependencies and to give
+# a clear example of how PBKDF2 is implemented. However,
+# there are faster solutions for production code. With 
+# the PyCrypto libraries installed, using this code:
+#   from Crypto.Protocol.KDF import PBKDF2
+#   from Crypto.Hash import SHA512
+#   from Crypto.Hash import HMAC
+#   hmac_hash = lambda key, msg : HMAC.new(key, msg, SHA512).digest()
+#   pbkdf2 = lambda password, salt, len, count : PBKDF2(password, salt, len, count, hmac_hash)
+# is about twice as fast.
+
 pbkdf2_U = hmac_hash
 
 def pbkdf2_F(password, salt, iterations, i):
