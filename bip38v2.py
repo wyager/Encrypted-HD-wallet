@@ -19,9 +19,9 @@ def encrypt_root_key(root_key, salt, passphrase, hash_function):
     if type(root_key) != type(""):
         raise Exception("root key needs to be a string")
 
-    preH = crypto.hmac_hash(salt, passphrase)
+    preH = crypto.pbkdf2(salt, passphrase, pow(2,13), 64)
     strongH = hash_function(preH, preH, 64)
-    postH = crypto.hmac_hash(passphrase, salt)
+    postH = crypto.pbkdf2(passphrase, salt, pow(2,10), 64)
     H = crypto.pbkdf2(postH, strongH, pow(2,10), len(root_key) + 32)
 
     whitened_root_key = crypto.string_xor(root_key, H[0:-32])
@@ -41,9 +41,9 @@ def decrypt_root_key(encrypted_key, salt, passphrase, hash_function):
     hash_function should be a function that takes a key, a salt, and a length L and outputs an L byte string.
     The returned value is the unencrypted key as a string.
     """
-    preH = crypto.hmac_hash(salt, passphrase)
+    preH = crypto.pbkdf2(salt, passphrase, pow(2,13), 64)
     strongH = hash_function(preH, preH, 64)
-    postH = crypto.hmac_hash(passphrase, salt)
+    postH = crypto.pbkdf2(passphrase, salt, pow(2,10), 64)
     H = crypto.pbkdf2(postH, strongH, pow(2,10), len(encrypted_key) + 32)
 
     encryption_key = H[-32:] # Use the last 32 bytes of H as a key
