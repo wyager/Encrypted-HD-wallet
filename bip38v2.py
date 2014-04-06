@@ -122,9 +122,9 @@ def generate_root_key(length=32):
     return random_data
 
 
-def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0, salt_entropy = 0):
+def make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0, salt_entropy = None):
     """
-    make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0, salt_entropy = 0)
+    make_wallet(root_key, date, passphrase=None, fake_passphrase = None, kdf_type=0, salt_entropy = None)
     root_key should be a 16, 32, or 64 byte string.
     Date should be a 16-bit integer >= 0.
     passphrase (optional) should be a string. Providing a passphrase will enable encryption.
