@@ -160,7 +160,7 @@ def test():
 
         ###### Clear ######
         if v['clear'] != b58(bip38v2.make_wallet(root, weeks, passphrase = None)):
-            print "Error: On vector %i, the cleartext wallet is different." % (i+1)
+            print "ERROR: On vector %i, the cleartext wallet is different." % (i+1)
             print v['clear']
             print b58(bip38v2.make_wallet(root, weeks, passphrase = None))
         else:
@@ -170,7 +170,7 @@ def test():
         if recovered_root == root:
             print "Decrypted wallet OK (clear)"
         else:
-            print "Error decrypting wallet (clear)"
+            print "ERROR: Error decrypting wallet (clear)"
 
         ###### Encrypted ######
         for kdf in (0,1,8):
@@ -182,18 +182,18 @@ def test():
             if recovered_root == root:
                 print "Decrypted wallet OK (kdf{})".format(kdf)
             else:
-                print "Error decrypting wallet (kdf{})".format(kdf)
+                print "ERROR: Error decrypting wallet (kdf{})".format(kdf)
             recovered_fake_root = bip38v2.decrypt_wallet(b58d(v['kdf'+str(kdf)]), passphrase=fake_password)[3]
             recovered_fake_master = crypto.generate_master_secret(recovered_fake_root)
             if recovered_fake_master == v['fake_privkey'+str(kdf)].decode('hex'):
                 print "Decrypted wallet w/fake password OK (kdf{})".format(kdf)
             else:
-                print "Error decrypting wallet with fake password (kdf{})".format(kdf)
+                print "ERROR: Error decrypting wallet with fake password (kdf{})".format(kdf)
             generated_wallet = b58(bip38v2.make_wallet(root, weeks, passphrase=password, fake_passphrase=fake_password, salt_entropy=v['salt_entropy'], kdf_type=kdf))
             if generated_wallet == v['kdf'+str(kdf)]:
                 print "Generated the same encrypted wallet with kdf " + str(kdf)
             else:
-                print "Error generating the same encrypted wallet with kdf " + str(kdf)
+                print "ERROR: Error generating the same encrypted wallet with kdf " + str(kdf)
 
 # Print out the test vectors in nice, copy-pastable JSON
 def pretty_print_vectors(vectors):
