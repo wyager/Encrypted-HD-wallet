@@ -132,7 +132,7 @@ kdf_functions = {
 
 ################ Verification ################
 
-# This checksum is used to verify that the user entered their unencrypted waller correctly
+# This checksum is used to verify that the user entered their unencrypted wallet correctly
 secret_checksum = lambda root_key : sha_hash(sha_hash(generate_master_secret(root_key)))
 
 
